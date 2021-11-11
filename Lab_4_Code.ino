@@ -89,6 +89,10 @@ volatile int rightSteadyError = 0;
 
 int moves[MOVESIZE];
 int optimalMoves[5] = {FORWARD, LEFT, FORWARD, RIGHT, FORWARD};
+// exploreMoves = [F, R, F, F, R, F, R, F, L, L, F, F, F, F, L, L, F, R, F, F, F, R, F];
+int theorteticalRun[23] = {FORWARD, RIGHT, FORWARD, FORWARD, RIGHT, FORWARD, RIGHT, FORWARD, LEFT, LEFT, FORWARD, FORWARD, FORWARD, FORWARD, LEFT, LEFT, FORWARD, RIGHT, FORWARD, FORWARD, FORWARD, RIGHT, FORWARD};
+//TURN ON TO RUN THE MANUAL OPTIMAL MOVES
+boolean runOptimal = false;
 
 // Define IR Distance sesnsor Pins
 #define frontIR A0
@@ -134,16 +138,22 @@ void loop()
   while (digitalRead(pushButton) == 0); // wait for button release
   Serial.println("Exploring the maze!");
   explore();
+  delay(1000);
   Serial.println("Finished exploring!");
   stop_motors();
+  delay(1000);
   Serial.println("Began solving the maze!");
   solve();
   Serial.println("Finished solving the maze!");
+  delay(1000);
   while (1) { //Inifnite number of runs, so you don't have to re-explore everytime a mistake happens
+    Serial.println("Beginning infinite loop for run maze");
     while (digitalRead(pushButton) == 1); // wait for button push
     while (digitalRead(pushButton) == 0); // wait for button release
+    Serial.println("Beginning to run the maze");
     runMaze();
     stop_motors();
+    Serial.println("Finished running the maze");
   }
 }
 
@@ -245,23 +255,42 @@ void solve() {
     lastMove = moves[i];
     newMoves[newMovesLength] = moves[i];
   }
+  //PRINT THE MOVES
+  //PRINT THE NEW MOVES
+  //COPY THE NEW MOVES TO THE MOVES ARRAY AND FILL IN THE REST OF MOVES WITH NULL
 }
 ////////////////////////////////////////////////////////////////////////////////
 void runMaze() {
-  for(int i = 0; i < sizeof(moves)/2; i++){
-    // copy for loop from Lab 3 to run through finished maze path
-    if(moves[i]==LEFT){
-      turnLeft();
+  if(runOptimal){
+    for(int i = 0; i < sizeof(optimalMoves)/2; i++){
+      // copy for loop from Lab 3 to run through finished maze path
+      if(optimalMoves[i]==LEFT){
+        turnLeft();
+      }
+      else if(optimalMoves[i]==RIGHT){
+        turnRight();
+      }
+      else{
+        driveOneBox();
+      }
+      stop_motors();
     }
-    else if(moves[i]==RIGHT){
-      turnRight();
-    }
-    else{
-      driveOneBox();
-    }
-    stop_motors();
-    delay(1000);
   }
+  else{
+    for(int i = 0; i < sizeof(moves)/2; i++){
+    // copy for loop from Lab 3 to run through finished maze path
+      if(moves[i]==LEFT){
+        turnLeft();
+      }
+      else if(moves[i]==RIGHT){
+        turnRight();
+      }
+      else{
+        driveOneBox();
+      }
+      stop_motors();
+    }
+  } 
   stop_motors();
   Serial.print("All done");
   return;
