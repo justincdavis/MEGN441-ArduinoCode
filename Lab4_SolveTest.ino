@@ -40,7 +40,7 @@ struct indexLength identifyTurnaround(int moves[], int arrSize, int hand, boolea
   for(int i = 0; i < arrSize; i++){
     if(moves[i] == NONE)
       break;
-    if(lastMove == moves[i] && (moves[i] == RIGHT || moves[i] == LEFT)){ //finds two turns in a row
+    if(lastMove == moves[i] && moves[i] == nothand){ //finds two turns in a row
       if(debug){
         Serial.println("");
         Serial.println("EVALUATING DEAD END");
