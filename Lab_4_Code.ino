@@ -458,7 +458,7 @@ String moveMap(int m){
 }
 
 void solve(int moves[], int arrSize, int hand, boolean debug){
-  while(rsolvemoves, arrSize, hand, debug));
+  while(rsolve(moves, arrSize, hand, debug));
 }
 ////////////////////////////////////////////////////////////////////////////////
 void runMaze() {
