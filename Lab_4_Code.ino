@@ -462,35 +462,18 @@ void solve(int moves[], int arrSize, int hand, boolean debug){
 }
 ////////////////////////////////////////////////////////////////////////////////
 void runMaze() {
-  if(runOptimal){
-    for(int i = 0; i < sizeof(optimalMoves)/2; i++){
-      // copy for loop from Lab 3 to run through finished maze path
-      if(optimalMoves[i]==LEFT){
-        turnLeft();
-      }
-      else if(optimalMoves[i]==RIGHT){
-        turnRight();
-      }
-      else{
-        driveOneBox();
-      }
-      stop_motors();
+  for(int i = 0; i < sizeof(moves)/2; i++){
+  // copy for loop from Lab 3 to run through finished maze path
+    if(moves[i]==LEFT){
+      turnLeft();
     }
-  }
-  else{
-    for(int i = 0; i < sizeof(moves)/2; i++){
-    // copy for loop from Lab 3 to run through finished maze path
-      if(moves[i]==LEFT){
-        turnLeft();
-      }
-      else if(moves[i]==RIGHT){
-        turnRight();
-      }
-      else{
-        driveOneBox();
-      }
-      stop_motors();
+    else if(moves[i]==RIGHT){
+      turnRight()      
     }
+    else{
+      driveOneBox();
+    }
+    stop_motors();
   } 
   stop_motors();
   Serial.print("All done");
