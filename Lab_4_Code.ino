@@ -412,6 +412,7 @@ boolean rsolve(int moves[], int arrSize, int hand, boolean debug) {
     }
   }
   else if(r.pattern == 4){  
+    reduced = true;
     moves[r.index] = r.replacement;
     moves[r.index+1] = r.replacement;
     //copy from the ending + 1 to the end of the array
