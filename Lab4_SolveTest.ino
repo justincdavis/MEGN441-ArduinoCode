@@ -7,31 +7,35 @@ int theoreticalRun[23] = {FORWARD, RIGHT, FORWARD, FORWARD, RIGHT, FORWARD, RIGH
 int optimalMoves[5] = {FORWARD, LEFT, FORWARD, RIGHT, FORWARD};
 int newMoves[23] = {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE};
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
+struct indexLength {
+    int index;
+    int length;
+    int replacement;
+    int pattern;
+};
+
+void printIndexLength(struct indexLength m){
+  Serial.print("Index: ");
+  Serial.print(m.index);
+  Serial.print("  Length: ");
+  Serial.print(m.length);
+  Serial.print("  Replacement: ");
+  Serial.print(moveMap(m.replacement));
+  Serial.print("  Pattern: ");
+  Serial.println(m.pattern);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  Serial.println("Begin solving!");
-  boolean reduced = solve(theoreticalRun, 23, false);
-  reduced = solve(newMoves, 23, true);
-  Serial.println("Finished Solving");
-  Serial.println("");
-  printMovesArray(newMoves, 23);
-  delay(5000);
-}
-
-boolean solve(int moves[], int arrSize, boolean debug) {
-  Serial.println("Input array to solve: ");
-  printMovesArray(moves, arrSize);
-  // Write your own algorithm to solve the maze using the list of moves from explore
-  // int newMoves[arrSize]; //set to size of old array since it cannot be larger
-  // for(int i = 0; i < arrSize; i++){ //init to NONE
-  //   newMoves[i] = NONE;
-  // }
-  int newMovesLength = 0; //counter for new moves added
+struct indexLength identifyTurnaround(int moves[], int arrSize, int hand, boolean debug){
+  int nothand = NONE;
+  if(hand == 1)
+    nothand = -1;
+  else  
+    nothand = 1;
+  struct indexLength r;
+  r.index = 0;
+  r.length = 0;
+  r.replacement = NONE;
+  r.pattern = 0;
   int lastMove = NONE; //set to a value it cannot be, saves last move
   for(int i = 0; i < arrSize; i++){
     if(moves[i] == NONE)
@@ -81,57 +85,144 @@ boolean solve(int moves[], int arrSize, boolean debug) {
         Serial.print("Matching forwards: ");
         Serial.println(matchingForwards);
       }
-      
 
-      //need to go back one plus the matching Forwards and start replacing there again
-      int removedMoves = matchingForwards + 1;
-      newMovesLength -= removedMoves;
-      if(moves[i] == RIGHT){
-        if(debug){
-          String args[] = {"Replacing newMoves[", String(newMovesLength), "] with LEFT"};
-          smartPrint(args, 3);
-        }
-        newMoves[newMovesLength] = LEFT;
-      }
-      else{
-        if(debug){
-          String args[] = {"Replacing newMoves[", String(newMovesLength), "] with RIGHT"};
-          smartPrint(args, 3);
-        }
-        newMoves[newMovesLength] = RIGHT;
-      }
-      newMovesLength++;
-      i += matchingForwards + 1;
+      int starting = i - 1 - matchingForwards;
+      int ending = i + matchingForwards;
+
       if(debug){
-        Serial.print("New counter for given moves: ");
-        Serial.println(i);
-        Serial.println("FINISHED EVALUATING DEAD END");
-        Serial.println("");
-        printMovesArray(newMoves, arrSize);
+        String args[] = {"Starting: ", String(starting), "  Ending: ", String(ending)};
+        smartPrint(args, 4);
       }
+
+
+      //look for pattern 1, handed before start and handed plus forward after ending
+      Serial.println("Checking Pattern 1");
+      if(starting > 0){
+        if(moves[starting-1] == hand){
+          if(ending < arrSize - 2){
+            if(moves[ending+1] == hand && moves[ending+2] == FORWARD){
+              Serial.println("  FOUND PATTERN");
+              r.index = starting-1;
+              r.length = ending - starting + 3;
+              r.replacement = FORWARD;
+              r.pattern = 1;
+              return r;
+            }
+          }
+        }
+      }
+      //look for pattern 2, which is a hand before the start
+      Serial.println("Checking Pattern 2");
+      if(starting > 0){
+        if(moves[starting-1] == hand){
+            Serial.println("  FOUND PATTERN");
+            r.index = starting - 1;
+            r.length = ending - starting + 1;
+            r.replacement = nothand;
+            r.pattern = 2;
+            return r;
+        }
+      }
+      //look for pattern 3, which is a hand after the end
+      Serial.println("Checking Pattern 3");
+      if(ending < arrSize - 2){
+        if(moves[ending+1] == hand){
+          Serial.println("  FOUND PATTERN");
+          r.index = starting;
+          r.length = ending - starting + 1;
+          r.replacement = nothand;
+          r.pattern = 3;
+          return r;
+        }
+      }
+      //if it is not any of the above 3, then it is the fourth pattern
+      Serial.println("Checking Pattern 4");
+      Serial.println("  FOUND PATTERN");
+      r.index = starting;
+      r.length = ending-starting;
+      r.replacement = hand;
+      r.pattern = 4;
+      return r;
     }
     lastMove = moves[i];
-    newMoves[newMovesLength] = moves[i];
-    newMovesLength++;
-    if(debug){
-      Serial.println("");
-      Serial.print("i: ");
-      Serial.println(i);
-      printMovesArray(newMoves, arrSize);
+  }
+  return r;
+}
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.println("Begin solving!");
+
+
+  solve(theoreticalRun, 23, RIGHT, true);
+  printMovesArray(newMoves, 23);
+
+  Serial.println("Finished Solving");
+  Serial.println("");
+  //printMovesArray(newMoves, 23);
+  delay(5000);
+}
+
+void solve(int moves[], int arrSize, int hand, boolean debug){
+  while(rsolve(moves, arrSize, hand, debug));
+}
+
+boolean rsolve(int moves[], int arrSize, int hand, boolean debug) {
+  Serial.println("Input array to solve: ");
+  printMovesArray(moves, arrSize);
+
+  struct indexLength r = identifyTurnaround(moves, arrSize, hand, debug);
+  boolean reduced = false;
+
+  if(r.pattern == 1 || r.pattern == 2 || r.pattern == 3){ //pattern 1,2,3 case
+    reduced = true;
+    moves[r.index] = r.replacement;
+    //copy from the ending + 1 to the end of the array
+    //then fill from where the 'new index was to the end of the array with NONE
+    int newIndex = r.index+1;
+    for(int i = r.index+r.length+1; i < arrSize; i++){
+      moves[newIndex] = moves[i];
+      newIndex++;
+    }
+    for(int i = newIndex; i < arrSize; i++){
+      moves[i] = NONE;
     }
   }
-  if(debug){
-    Serial.println("");
-    Serial.println("Solved moves:");
-    printMovesArray(newMoves, arrSize);
+  else if(r.pattern == 4){  
+    moves[r.index] = r.replacement;
+    moves[r.index+1] = r.replacement;
+    //copy from the ending + 1 to the end of the array
+    //then fill from where the 'new index was to the end of the array with NONE
+    int newIndex = r.index+2;
+    for(int i = r.index+r.length+1; i < arrSize; i++){
+      moves[newIndex] = moves[i];
+      newIndex++;
+    }
+    for(int i = newIndex; i < arrSize; i++){
+      moves[i] = NONE;
+    }
   }
-  //PRINT THE MOVES
-  //PRINT THE NEW MOVES
-  //COPY THE NEW MOVES TO THE MOVES ARRAY AND FILL IN THE REST OF MOVES WITH NULL
-  if(newMovesLength < arrSize)
-    return true;
-  else
-    return false;
+  else{
+    if(debug){
+      Serial.println("No more simplifications can be made!");
+    }
+  }
+  //copy into newMoves array
+  if(debug){
+    Serial.println("Reduced input to :");
+    printMovesArray(moves, arrSize);
+    Serial.println("Using strucural info: ");
+    printIndexLength(r);
+    Serial.println(" ");
+  }
+
+  for(int i = 0; i < arrSize; i++){
+    newMoves[i] = moves[i];
+  }
+  return reduced;
 }
 
 String moveMap(int m){
@@ -174,3 +265,4 @@ void smartPrint(String args[], int s){
       Serial.println(args[i]);
   }
 }
+
