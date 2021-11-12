@@ -462,12 +462,12 @@ void solve(int moves[], int arrSize, int hand, boolean debug){
 }
 ////////////////////////////////////////////////////////////////////////////////
 void runMaze() {
-  for(int i = 0; i < sizeof(moves)/2; i++){
+  for(int i = 0; i < sizeof(runMoves)/2; i++){
   // copy for loop from Lab 3 to run through finished maze path
-    if(moves[i]==LEFT){
+    if(runMoves[i]==LEFT){
       turnLeft();
     }
-    else if(moves[i]==RIGHT){
+    else if(runMoves[i]==RIGHT){
       turnRight()      
     }
     else{
